@@ -8,7 +8,7 @@
 SELECT * FROM album;
 
 -- Selecciona todos los géneros únicos de la tabla Genres.
-SELECT DISTINCT * FROM genre;
+SELECT DISTINCT name FROM genre;
 
 -- Cuenta el número de pistas por género.
 SELECT genre.name, COUNT(*) 
