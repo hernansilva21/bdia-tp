@@ -105,7 +105,65 @@ db.facturas.aggregate([
 // 4. Se requiere obtener un reporte que contenga la siguiente información, nro. cuit,
 // apellido y nombre y región y cantidad de facturas, ordenado por apellido.
 db.facturas.aggregate([
-  { $unwind: "$item" },
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit",
+        apellido: "$cliente.apellido",
+        nombre: "$cliente.nombre",
+        region: "$cliente.region",
+      },
+      cantidadFacturas: { $sum: 1 },
+    },
+  },
+  {
+    $project: {
+      cuit: "$_id.cuit",
+      apellido: "$_id.apellido",
+      nombre: "$_id.nombre",
+      region: "$_id.region",
+      cantidadFacturas: 1,
+      _id: 0,
+    },
+  },
+  { $sort: { apellido: 1 } }
+]);
+
+// Resultado:
+// [
+//   {
+//     "cantidadFacturas": 14,
+//     "cuit": 2729887543,
+//     "apellido": "Lavagno",
+//     "nombre": "Soledad",
+//     "region": "NOA"
+//   },
+//   {
+//     "cantidadFacturas": 15,
+//     "cuit": 2740488484,
+//     "apellido": "Malinez",
+//     "nombre": "Marina",
+//     "region": "CENTRO"
+//   },
+//   {
+//     "cantidadFacturas": 42,
+//     "cuit": 2029889382,
+//     "apellido": "Manoni",
+//     "nombre": "Juan Manuel",
+//     "region": "NEA"
+//   },
+//   {
+//     "cantidadFacturas": 29,
+//     "cuit": 2038373771,
+//     "apellido": "Zavasi",
+//     "nombre": "Martin",
+//     "region": "CABA"
+//   }
+// ]
+
+// 5. Basados en la consulta del punto 4 informar sólo los clientes con número de
+// CUIT mayor a 27000000000.
+db.facturas.aggregate([
   {
     $group: {
       _id: {
@@ -128,15 +186,62 @@ db.facturas.aggregate([
     },
   },
   { $sort: { apellido: 1 } },
+  { $match: { cuit: { $gt: 2700000000 } } }
 ]);
 
-// 5. Basados en la consulta del punto 4 informar sólo los clientes con número de
-// CUIT mayor a 27000000000.
-
+// Resultado:
+// [
+//   {
+//     "cantidadFacturas": 14,
+//     "cuit": 2729887543,
+//     "apellido": "Lavagno",
+//     "nombre": "Soledad",
+//     "region": "NOA"
+//   },
+//   {
+//     "cantidadFacturas": 15,
+//     "cuit": 2740488484,
+//     "apellido": "Malinez",
+//     "nombre": "Marina",
+//     "region": "CENTRO"
+//   }
+// ]
 
 // 6. Basados en la consulta del punto 5 informar solamente la cantidad de clientes
 // que cumplen con esta condición.
+db.facturas.aggregate([
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit",
+        apellido: "$cliente.apellido",
+        nombre: "$cliente.nombre",
+        region: "$cliente.region",
+      },
+      cantidadFacturas: { $sum: 1 },
+    },
+  },
+  {
+    $project: {
+      cuit: "$_id.cuit",
+      apellido: "$_id.apellido",
+      nombre: "$_id.nombre",
+      region: "$_id.region",
+      cantidadFacturas: 1,
+      _id: 0,
+    },
+  },
+  { $sort: { apellido: 1 } },
+  { $match: { cuit: { $gt: 2700000000 } } },
+  { $count: "cantidadClientes" }
+]);
 
+// Resultado:
+// [
+//   {
+//     "cantidadClientes": 2
+//   }
+// ]
 
 // 7. Se requiere realizar una consulta que devuelva la siguiente información: producto
 // y cantidad de facturas en las que lo compraron, ordenado por cantidad de facturas
