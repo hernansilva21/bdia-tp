@@ -104,7 +104,31 @@ db.facturas.aggregate([
 
 // 4. Se requiere obtener un reporte que contenga la siguiente información, nro. cuit,
 // apellido y nombre y región y cantidad de facturas, ordenado por apellido.
-
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit",
+        apellido: "$cliente.apellido",
+        nombre: "$cliente.nombre",
+        region: "$cliente.region",
+      },
+      cantidadFacturas: { $sum: 1 },
+    },
+  },
+  {
+    $project: {
+      cuit: "$_id.cuit",
+      apellido: "$_id.apellido",
+      nombre: "$_id.nombre",
+      region: "$_id.region",
+      cantidadFacturas: 1,
+      _id: 0,
+    },
+  },
+  { $sort: { apellido: 1 } },
+]);
 
 // 5. Basados en la consulta del punto 4 informar sólo los clientes con número de
 // CUIT mayor a 27000000000.
