@@ -246,38 +246,400 @@ db.facturas.aggregate([
 // 7. Se requiere realizar una consulta que devuelva la siguiente información: producto
 // y cantidad de facturas en las que lo compraron, ordenado por cantidad de facturas
 // descendente.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$item.producto",
+      cantidadFacturas: { $sum: 1 },
+    },
+  },
+  {
+    $project: {
+      producto: "$_id",
+      cantidadFacturas: 1,
+      _id: 0,
+    },
+  },
+  { $sort: { cantidadFacturas: -1 } }
+])
 
+// Resultado:
+// [
+//   {
+//     "cantidadFacturas": 43,
+//     "producto": "TALADRO 12mm"
+//   },
+//   {
+//     "cantidadFacturas": 29,
+//     "producto": "CORREA 10mm"
+//   },
+//   {
+//     "cantidadFacturas": 28,
+//     "producto": "TUERCA 2mm"
+//   },
+//   {
+//     "cantidadFacturas": 28,
+//     "producto": "TUERCA 5mm"
+//   },
+//   {
+//     "cantidadFacturas": 28,
+//     "producto": "SET HERRAMIENTAS"
+//   },
+//   {
+//     "cantidadFacturas": 15,
+//     "producto": " CORREA 12mm"
+//   }
+// ]
 
 // 8. Obtener la cantidad total comprada así como también los ingresos totales para cada
 // producto.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$item.producto",
+      cantidadProducto: { $sum: "$item.cantidad" },
+      ingresosProducto: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      producto: "$_id",
+      cantidadProducto: 1,
+      ingresosProducto: 1,
+      _id: 0,
+    },
+  }
+])
 
+// Resultado:
+// [
+//   {
+//     "cantidadProducto": 28,
+//     "ingresosProducto": 19600,
+//     "producto": "SET HERRAMIENTAS"
+//   },
+//   {
+//     "cantidadProducto": 198,
+//     "ingresosProducto": 26532,
+//     "producto": "CORREA 10mm"
+//   },
+//   {
+//     "cantidadProducto": 112,
+//     "ingresosProducto": 6720,
+//     "producto": "TUERCA 2mm"
+//   },
+//   {
+//     "cantidadProducto": 165,
+//     "ingresosProducto": 2970,
+//     "producto": " CORREA 12mm"
+//   },
+//   {
+//     "cantidadProducto": 43,
+//     "ingresosProducto": 21070,
+//     "producto": "TALADRO 12mm"
+//   },
+//   {
+//     "cantidadProducto": 350,
+//     "ingresosProducto": 31500,
+//     "producto": "TUERCA 5mm"
+//   }
+// ]
 
 // 9. Idem el punto anterior, ordenar por ingresos en forma ascendente, saltear el 1ro
 // y mostrar 2do y 3ro.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$item.producto",
+      cantidadProducto: { $sum: "$item.cantidad" },
+      ingresosProducto: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      producto: "$_id",
+      cantidadProducto: 1,
+      ingresosProducto: 1,
+      _id: 0,
+    },
+  },
+  { $sort: { ingresosProducto: 1 } },
+  { $skip: 1 },
+  { $limit: 2 }
+])
 
+// Resultado:
+// [
+//   {
+//     "cantidadProducto": 112,
+//     "ingresosProducto": 6720,
+//     "producto": "TUERCA 2mm"
+//   },
+//   {
+//     "cantidadProducto": 28,
+//     "ingresosProducto": 19600,
+//     "producto": "SET HERRAMIENTAS"
+//   }
+// ]
 
 // 10. Obtener todos productos junto con un array de las personas que lo compraron. En
 // este array deberá haber solo strings con el nombre completo de la persona. Los
 // documentos entregados como resultado deberán tener la siguiente forma:
 // {producto: “<nombre>”, personas:[“…”, …]}
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$item.producto",
+      personas: { $addToSet: { $concat: ["$cliente.nombre", " ", "$cliente.apellido"] } },
+      },
+  },
+  {
+    $project: {
+      producto: "$_id",
+      personas: 1,
+      _id: 0,
+    },
+  }
+])
 
+// Resultado:
+// [
+//   {
+//     "personas": [
+//       "Marina Malinez"
+//     ],
+//     "producto": " CORREA 12mm"
+//   },
+//   {
+//     "personas": [
+//       "Juan Manuel Manoni",
+//       "Marina Malinez"
+//     ],
+//     "producto": "TALADRO 12mm"
+//   },
+//   {
+//     "personas": [
+//       "Martin Zavasi"
+//     ],
+//     "producto": "CORREA 10mm"
+//   },
+//   {
+//     "personas": [
+//       "Martin Zavasi",
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "TUERCA 2mm"
+//   },
+//   {
+//     "personas": [
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "TUERCA 5mm"
+//   },
+//   {
+//     "personas": [
+//       "Soledad Lavagno",
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "SET HERRAMIENTAS"
+//   }
+// ]
 
 // 11. Obtener los productos ordenados en forma descendente por la cantidad de
 // diferentes personas que los compraron.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$item.producto",
+      personas: { $addToSet: { $concat: ["$cliente.nombre", " ", "$cliente.apellido"] } },
+      },
+  },
+  {
+    $project: {
+      producto: "$_id",
+      personas: 1,
+      cantidadPersonas: { $size : "$personas" },
+      _id: 0,
+    },
+  },
+  { $sort: { cantidadPersonas: -1 } }
+])
 
+// Resultado:
+// [
+//   {
+//     "personas": [
+//       "Marina Malinez",
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "TALADRO 12mm",
+//     "cantidadPersonas": 2
+//   },
+//   {
+//     "personas": [
+//       "Martin Zavasi",
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "TUERCA 2mm",
+//     "cantidadPersonas": 2
+//   },
+//   {
+//     "personas": [
+//       "Soledad Lavagno",
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "SET HERRAMIENTAS",
+//     "cantidadPersonas": 2
+//   },
+//   {
+//     "personas": [
+//       "Marina Malinez"
+//     ],
+//     "producto": " CORREA 12mm",
+//     "cantidadPersonas": 1
+//   },
+//   {
+//     "personas": [
+//       "Martin Zavasi"
+//     ],
+//     "producto": "CORREA 10mm",
+//     "cantidadPersonas": 1
+//   },
+//   {
+//     "personas": [
+//       "Juan Manuel Manoni"
+//     ],
+//     "producto": "TUERCA 5mm",
+//     "cantidadPersonas": 1
+//   }
+// ]
 
 // 12. Obtener el total gastado por persona y mostrar solo los que gastaron más de
 // 3100000. Los documentos devueltos deben tener el nombre completo del cliente y el
 // total gastado:
 // {cliente:”<nombreCompleto>”,total:<num>}
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: {
+        cuit: "$cliente.cuit",
+        apellido: "$cliente.apellido",
+        nombre: "$cliente.nombre",
+      },
+      totalGastado: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      cliente: { $concat: ["$_id.nombre", " ", "$_id.apellido"] },
+      totalGastado: 1,
+      _id: 0,
+    },
+  },
+  { $match: { totalGastado: { $gt: 31000 } } }
+]);
 
+// Resultado: para total gastado mayor a 31000
+// [
+//   {
+//     "totalGastado": 56700,
+//     "cliente": "Juan Manuel Manoni"
+//   },
+//   {
+//     "totalGastado": 31572,
+//     "cliente": "Martin Zavasi"
+//   }
+// ]
 
 // 13. Obtener el promedio de gasto por factura por cada región.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: {
+        nroFactura : "$nroFactura",
+        region : "$cliente.region",
+      },
+      gasto: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      nroFactura: "$_id.nroFactura",
+      region: "$_id.region",
+      gasto: 1,
+      _id: 0,
+    },
+  },
+  {
+    $group: {
+      _id: "$region",
+      promedioGasto: { $avg: "$gasto" },
+    },
+  },
+  {
+    $project: {
+      region: "$_id",
+      promedioGasto: 1,
+      _id: 0,
+    },
+  }
+]);
 
+// Resultado:
+// [
+//   {
+//     "promedioGasto": 700,
+//     "region": "NOA"
+//   },
+//   {
+//     "promedioGasto": 1350,
+//     "region": "NEA"
+//   },
+//   {
+//     "promedioGasto": 1088.6896551724137,
+//     "region": "CABA"
+//   },
+//   {
+//     "promedioGasto": 688,
+//     "region": "CENTRO"
+//   }
+// ]
 
 // 14. Obtener la factura en la que se haya gastado más. En caso de que sean varias
 // obtener la que tenga el número de factura menor.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$nroFactura",
+      gasto: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      nroFactura: "$_id",
+      gasto: 1,
+      _id: 0,
+    },
+  },
+  { $sort: { gasto: -1, nroFactura: 1 } },
+  { $limit: 1 }
+]);
 
+// Resultado:
+// [
+//   {
+//     "gasto": 1968,
+//     "nroFactura": 1002
+//   }
+// ]
 
 // 15. Obtener a los clientes indicando cuánto fue lo que más gastó en una única factura.
 
