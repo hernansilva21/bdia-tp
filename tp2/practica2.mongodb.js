@@ -642,10 +642,225 @@ db.facturas.aggregate([
 // ]
 
 // 15. Obtener a los clientes indicando cuánto fue lo que más gastó en una única factura.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: {
+        nroFactura : "$nroFactura",
+        nombre: "$cliente.nombre",
+        apellido: "$cliente.apellido",
+        cuit: "$cliente.cuit",
+      },
+      gasto: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      nroFactura: "$_id.nroFactura",
+      nombre: "$_id.nombre",
+      apellido: "$_id.apellido",
+      cuit: "$_id.cuit",
+      gasto: 1,
+      _id: 0,
+    },
+  },
+  {
+    $group: {
+      _id: {
+        nombre: "$nombre",
+        apellido: "$apellido",
+        cuit: "$cuit",
+      },
+      maxGasto: { $max: "$gasto" },
+    },
+  },
+  {
+    $project: {
+      nombre: "$_id.nombre",
+      apellido: "$_id.apellido",
+      cuit: "$_id.cuit",
+      maxGasto: 1,
+      _id: 0,
+    }
+  }
+]);
 
+// Resultado:
+// [
+//   {
+//     "maxGasto": 688,
+//     "nombre": "Marina",
+//     "apellido": "Malinez",
+//     "cuit": 2740488484
+//   },
+//   {
+//     "maxGasto": 1960,
+//     "nombre": "Juan Manuel",
+//     "apellido": "Manoni",
+//     "cuit": 2029889382
+//   },
+//   {
+//     "maxGasto": 1968,
+//     "nombre": "Martin",
+//     "apellido": "Zavasi",
+//     "cuit": 2038373771
+//   },
+//   {
+//     "maxGasto": 700,
+//     "nombre": "Soledad",
+//     "apellido": "Lavagno",
+//     "cuit": 2729887543
+//   }
+// ]
 
-// 17. Obtener la información de los clientes que hayan gastado 100000 en una orden junto
+// 17. Obtener la información de los clientes que hayan gastado 1000 en una orden junto
 // con el número de orden.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: {
+        nroFactura : "$nroFactura",
+        nombre: "$cliente.nombre",
+        apellido: "$cliente.apellido",
+        cuit: "$cliente.cuit",
+        region: "$cliente.region",
+      },
+      gasto: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      nroFactura: "$_id.nroFactura",
+      nombre: "$_id.nombre",
+      apellido: "$_id.apellido",
+      cuit: "$_id.cuit",
+      region: "$_id.region",
+      gasto: 1,
+      _id: 0,
+    },
+  },
+  { $match: { gasto: { $gt: 1000 }}},
+  {
+    $group: {
+      _id: {
+        nombre: "$nombre",
+        apellido: "$apellido",
+        cuit: "$cuit",
+        region: "$region",
+      },
+      facturas: { $push: "$nroFactura" },
+    },
+  },
+  {
+    $project: {
+      nombre: "$_id.nombre",
+      apellido: "$_id.apellido",
+      cuit: "$_id.cuit",
+      region: "$_id.region",
+      facturas: 1,
+      _id: 0,
+    }
+  }
+]);
 
+// Resultado: gasto mayor a 1000
+// [
+//   {
+//     "facturas": [
+//       1044,
+//       1030,
+//       1037,
+//       1023,
+//       1058,
+//       1079,
+//       1016,
+//       1086,
+//       1072,
+//       1065,
+//       1002,
+//       1051,
+//       1009,
+//       1093
+//     ],
+//     "nombre": "Martin",
+//     "apellido": "Zavasi",
+//     "cuit": 2038373771,
+//     "region": "CABA"
+//   },
+//   {
+//     "facturas": [
+//       1068,
+//       1010,
+//       1061,
+//       1024,
+//       1038,
+//       1075,
+//       1040,
+//       1017,
+//       1019,
+//       1082,
+//       1087,
+//       1026,
+//       1096,
+//       1073,
+//       1054,
+//       1059,
+//       1033,
+//       1052,
+//       1012,
+//       1080,
+//       1047,
+//       1089,
+//       1031,
+//       1005,
+//       1094,
+//       1045,
+//       1066,
+//       1003
+//     ],
+//     "nombre": "Juan Manuel",
+//     "apellido": "Manoni",
+//     "cuit": 2029889382,
+//     "region": "NEA"
+//   }
+// ]
 
 // 18. En base a la localidad de los clientes, obtener el total facturado por localidad.
+db.facturas.aggregate([
+  { $unwind: "$item" },
+  {
+    $group: {
+      _id: "$cliente.region",
+      totalFacturado: { $sum: { $multiply: ["$item.cantidad", "$item.precio"] } },
+    },
+  },
+  {
+    $project: {
+      region: "$_id",
+      totalFacturado: 1,
+      _id: 0
+    },
+  }
+]);
+
+// Resultado:
+// [
+//   {
+//     "totalFacturado": 31572,
+//     "region": "CABA"
+//   },
+//   {
+//     "totalFacturado": 10320,
+//     "region": "CENTRO"
+//   },
+//   {
+//     "totalFacturado": 9800,
+//     "region": "NOA"
+//   },
+//   {
+//     "totalFacturado": 56700,
+//     "region": "NEA"
+//   }
+// ]
