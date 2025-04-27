@@ -1,20 +1,20 @@
 # Modelo de lenguaje y tokenizador
-transformers==4.35.0
+transformers==4.51.3
 
 # Generación de embeddings de texto
-sentence-transformers==2.2.2
+sentence-transformers==4.1.0
 
 # Base de datos vectorial
-chromadb==0.4.6
+chromadb==1.0.7
 
 # Optimización para modelos de transformers
 accelerate
 
 # Framework de machine learning
-torch==2.0.1
+torch==2.7
 
 # Manipulación de arrays y operaciones matemáticas
-numpy==1.24.3
+numpy
 
 # Generación de identificadores únicos
 uuid==1.30
