@@ -1,4 +1,4 @@
-docker build -t chinook-postgres .
+# Trabajos Prácticos de Base de Datos para Inteligencia Artificial
 
-docker run -d -p 5432:5432 --name chinook-db -e POSTGRES_USER=docker -e POSTGRES_PASSWORD=docker -e POSTGRES_DB=chinook chinook-postgres
+## Alumno Hernan Matias Silva
 
